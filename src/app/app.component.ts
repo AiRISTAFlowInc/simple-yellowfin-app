@@ -18,6 +18,7 @@ export class AppComponent implements AfterViewInit {
   userId: string = 'admin@yellowfin.com.au';
   userPass: string = 'test';
   userOrg: string = '';
+  customerId: number = 2047; //hardcoded customer id for example
 
   yellowfinAPI: any;
 
@@ -92,12 +93,19 @@ export class AppComponent implements AfterViewInit {
       showShare: true,
       showReportDisplayToggle: true,
     };
-
-    this.yellowfinAPI.loadReport(options).catch((error: any) => {
+  
+    this.yellowfinAPI.loadReport(options).then((report: any) => {
+      report.filters.forEach((filter: any) => {
+        if (filter.name === 'CustomerID') {
+          filter.setValue(this.customerId);
+        }
+      });
+      report.filters.applyFilters();
+    }).catch((error: any) => {
       console.error('Error loading report:', error);
     });
   };
-
+  
   loadDashboard(): void {
     const options = {
       dashboardUUID: this.dashboardUUID,
@@ -110,9 +118,17 @@ export class AppComponent implements AfterViewInit {
       showShare: true,
       showReportDisplayToggle: true,
     };
-
-    this.yellowfinAPI.loadDashboard(options).catch((error: any) => {
+  
+    this.yellowfinAPI.loadDashboard(options).then((dashboard: any) => {
+      dashboard.filters.forEach((filter: any) => {
+        if (filter.name === 'CustomerId') {
+          filter.setValue(this.customerId);
+        }
+      });
+      dashboard.filters.applyFilters();
+    }).catch((error: any) => {
       console.error('Error loading dashboard:', error);
     });
   };
+  
 }
