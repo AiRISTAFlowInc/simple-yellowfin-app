@@ -4,7 +4,7 @@ import { DataService } from './data.service';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements AfterViewInit {
   title = 'Airista x Yellowfin';
@@ -22,15 +22,17 @@ export class AppComponent implements AfterViewInit {
 
   yellowfinAPI: any;
 
-  constructor(private dataService: DataService) { }
+  constructor(private dataService: DataService) {}
 
   ngAfterViewInit(): void {
-    this.loadExternalScript(this.baseUrl + '/JsAPI/v3').then(() => {
-      this.yellowfinAPI = (window as any).yellowfin;
-      this.createSSOToken();
-    }).catch((error) => {
-      console.error('Error loading external script', error);
-    });
+    this.loadExternalScript(this.baseUrl + '/JsAPI/v3')
+      .then(() => {
+        this.yellowfinAPI = (window as any).yellowfin;
+        this.createSSOToken();
+      })
+      .catch((error) => {
+        console.error('Error loading external script', error);
+      });
   }
 
   loadExternalScript(src: string): Promise<any> {
@@ -42,44 +44,50 @@ export class AppComponent implements AfterViewInit {
       script.onerror = reject;
       document.body.appendChild(script);
     });
-  };
+  }
 
   createSSOToken(): void {
     const body = {
       signOnUser: {
         userName: this.userId,
         password: this.userPass,
-        userOrgRef: this.userOrg
+        userOrgRef: this.userOrg,
       },
       noPassword: false,
       adminUser: {
         userName: this.adminId,
-        password: this.adminPass
-      }
+        password: this.adminPass,
+      },
     };
 
     this.dataService.postData(this.baseUrl, body).subscribe(
-      response => {
+      (response) => {
         let securityToken = response.securityToken;
         console.log('securityToken = ' + securityToken);
 
         // Initialize Yellowfin API and load the report
-        this.yellowfinAPI.init().then(() => {
-          this.yellowfinAPI.newSession(securityToken, this.userOrg).then(() => {
-            this.loadReport();
-            this.loadDashboard();
-          }).catch((error: any) => {
-            console.error('Error creating Yellowfin session:', error);
+        this.yellowfinAPI
+          .init()
+          .then(() => {
+            this.yellowfinAPI
+              .newSession(securityToken, this.userOrg)
+              .then(() => {
+                this.loadReport();
+                this.loadDashboard();
+              })
+              .catch((error: any) => {
+                console.error('Error creating Yellowfin session:', error);
+              });
+          })
+          .catch((error: any) => {
+            console.error('Error initializing Yellowfin API:', error);
           });
-        }).catch((error: any) => {
-          console.error('Error initializing Yellowfin API:', error);
-        });
       },
-      error => {
+      (error) => {
         console.error('Error obtaining SSO token:', error);
       }
     );
-  };
+  }
 
   loadReport(): void {
     const options = {
@@ -93,19 +101,26 @@ export class AppComponent implements AfterViewInit {
       showShare: true,
       showReportDisplayToggle: true,
     };
-  
-    this.yellowfinAPI.loadReport(options).then((report: any) => {
-      report.filters.forEach((filter: any) => {
-        if (filter.name === 'CustomerID') {
-          filter.setValue(this.customerId);
-        }
+
+    this.yellowfinAPI
+      .loadReport(options)
+      .then((report: any) => {
+        console.log(report);
+        report.filters.forEach((filter: any) => {
+          JSON.parse('{///}');
+          if (filter.name === 'CustomerID') {
+            filter.setValue(this.customerId);
+          }
+        });
+        setTimeout(() => {
+          report.filters.applyFilters();
+        }, 5000);
+      })
+      .catch((error: any) => {
+        console.error('Error loading report:', error);
       });
-      report.filters.applyFilters();
-    }).catch((error: any) => {
-      console.error('Error loading report:', error);
-    });
-  };
-  
+  }
+
   loadDashboard(): void {
     const options = {
       dashboardUUID: this.dashboardUUID,
@@ -118,17 +133,19 @@ export class AppComponent implements AfterViewInit {
       showShare: true,
       showReportDisplayToggle: true,
     };
-  
-    this.yellowfinAPI.loadDashboard(options).then((dashboard: any) => {
-      dashboard.filters.forEach((filter: any) => {
-        if (filter.name === 'CustomerId') {
-          filter.setValue(this.customerId);
-        }
+
+    this.yellowfinAPI
+      .loadDashboard(options)
+      .then((dashboard: any) => {
+        dashboard.filters.forEach((filter: any) => {
+          if (filter.name === 'CustomerId') {
+            filter.setValue(this.customerId);
+          }
+        });
+        dashboard.filters.applyFilters();
+      })
+      .catch((error: any) => {
+        console.error('Error loading dashboard:', error);
       });
-      dashboard.filters.applyFilters();
-    }).catch((error: any) => {
-      console.error('Error loading dashboard:', error);
-    });
-  };
-  
+  }
 }
